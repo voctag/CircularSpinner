@@ -80,18 +80,18 @@ open class CircularSpinner: UIView {
             configureType()
         }
     }
-    var lineWidth: CGFloat = 4 {
+    open var lineWidth: CGFloat = 4 {
         didSet {
             appearanceBackgroundLayer()
             appearanceProgressLayer()
         }
     }
-    var bgColor = UIColor.gray {
+    open var bgColor = UIColor.gray {
         didSet {
             appearanceBackgroundLayer()
         }
     }
-    var pgColor = UIColor.blue {
+    open var pgColor = UIColor.blue {
         didSet {
             appearanceProgressLayer()
         }
