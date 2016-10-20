@@ -8,11 +8,6 @@
 
 import UIKit
 
-@objc public protocol CircularSpinnerDelegate: NSObjectProtocol {
-    @objc optional func circularSpinnerTitleForValue(_ value: Float) -> NSAttributedString
-}
-
-
 public enum CircularSpinnerType {
     case determinate
     case indeterminate
@@ -31,11 +26,8 @@ open class CircularSpinner: UIView {
             layoutIfNeeded()
         }
     }
-    @IBOutlet fileprivate weak var titleLabel: UILabel!
-    @IBOutlet fileprivate weak var dismissButton: UIButton!
     
     // MARK: - properties
-    open weak var delegate: CircularSpinnerDelegate?
     fileprivate var mainView: UIView!
     fileprivate let nibName = "CircularSpinner"
     
@@ -47,10 +39,10 @@ open class CircularSpinner: UIView {
     var indeterminateDuration: Double = 1.5
     
     fileprivate var startAngle: CGFloat {
-        return CGFloat(M_PI_2)
+        return -CGFloat(M_PI_2)
     }
     fileprivate var endAngle: CGFloat {
-        return 5 * CGFloat(M_PI_2)
+        return 5 * CGFloat(M_PI)
     }
     fileprivate var arcCenter: CGPoint {
         return convert(circleView.center, to: circleView)
@@ -70,6 +62,11 @@ open class CircularSpinner: UIView {
             circleView.center = center
         }
     }
+    open var mainViewBgColor = UIColor.white {
+        didSet {
+            mainView.backgroundColor = mainViewBgColor
+        }
+    }
     open var value: Float {
         get {
             return backingValue
@@ -83,27 +80,18 @@ open class CircularSpinner: UIView {
             configureType()
         }
     }
-    open static var dismissButton: Bool = true
-    open var showDismissButton = dismissButton {
-        didSet {
-            appearanceDismissButton()
-        }
-    }
-    open static var trackLineWidth: CGFloat = 6
-    private var lineWidth = trackLineWidth {
+    var lineWidth: CGFloat = 4 {
         didSet {
             appearanceBackgroundLayer()
             appearanceProgressLayer()
         }
     }
-    open static var trackBgColor = UIColor(colorLiteralRed: 238.0/255, green: 238.0/255, blue: 238.0/255, alpha: 1)
-    private var bgColor = trackBgColor {
+    var bgColor = UIColor.gray {
         didSet {
             appearanceBackgroundLayer()
         }
     }
-    open static var trackPgColor = UIColor(colorLiteralRed: 47.0/255, green: 177.0/255, blue: 254.0/255, alpha: 1)
-    private var pgColor = trackPgColor {
+    var pgColor = UIColor.blue {
         didSet {
             appearanceProgressLayer()
         }
@@ -159,7 +147,6 @@ open class CircularSpinner: UIView {
         configureCircleView()
         configureBackgroundLayer()
         configureProgressLayer()
-        configureDismissButton()
         configureType()
     }
     
@@ -177,20 +164,14 @@ open class CircularSpinner: UIView {
         appearanceProgressLayer()
     }
     
-    fileprivate func configureDismissButton() {
-        appearanceDismissButton()
-    }
-    
     fileprivate func configureType() {
         switch type {
         case .indeterminate:
             startInderminateAnimation()
         default:
             oldStrokeEnd = nil
-            updateTitleLabel()
         }
     }
-    
     
     
     // MARK: - appearance
@@ -206,10 +187,6 @@ open class CircularSpinner: UIView {
         progressCircleLayer.fillColor = UIColor.clear.cgColor
         progressCircleLayer.strokeColor = pgColor.cgColor
         progressCircleLayer.lineCap = kCALineCapRound
-    }
-    
-    fileprivate func appearanceDismissButton() {
-        dismissButton.isHidden = !showDismissButton
     }
     
     
@@ -280,21 +257,10 @@ open class CircularSpinner: UIView {
         guard spinner.type == .determinate else { return }
         
         spinner.value = value
-        spinner.updateTitleLabel()
         spinner.setStrokeEnd(animated: animated) {
             if value >= 1 {
                 CircularSpinner.hide()
             }
-        }
-    }
-    
-    fileprivate func updateTitleLabel() {
-        let spinner = CircularSpinner.sharedInstance
-        
-        if let attributeStr = spinner.delegate?.circularSpinnerTitleForValue?(value) {
-            spinner.titleLabel.attributedText = attributeStr
-        } else {
-            spinner.titleLabel.text = "\(Int(value * 100))%"
         }
     }
     
@@ -322,23 +288,15 @@ open class CircularSpinner: UIView {
         oldStrokeEnd = spinner.value
     }
     
-    
-    // MARK: - actions
-    @IBAction fileprivate func dismissButtonTapped(_ sender: UIButton?) {
-        CircularSpinner.hide()
-    }
 }
 
 
 // MARK: - API
 extension CircularSpinner {
     
-    public class func show(_ title: String = "", animated: Bool = true, type: CircularSpinnerType = .determinate, showDismissButton: Bool = true, delegate: CircularSpinnerDelegate? = nil) {
+    public class func show(animated: Bool = true, type: CircularSpinnerType = .determinate) {
         let spinner = CircularSpinner.sharedInstance
         spinner.type = type
-        spinner.delegate = delegate
-        spinner.titleLabel.text = title
-        spinner.showDismissButton = showDismissButton
         spinner.value = 0
         spinner.updateFrame()
         
